@@ -40,17 +40,35 @@ new maptalks.CompassControl({
 }).addTo(map)
 
 // new Toolbar
+let rt
 new maptalks.control.Toolbar({
     position: 'top-left',
     items: [
         {
             item: 'start',
             click: () => {
-                new maptalks.Routetopo({
+                rt = new maptalks.Routetopo({
                     points: maptalks.GeoJSON.toGeometry(mockPoints),
                 })
                     .addTo(map)
                     .start()
+            },
+        },
+        {
+            item: 'start with obstacles',
+            click: () => {
+                rt = new maptalks.Routetopo({
+                    points: maptalks.GeoJSON.toGeometry(mockPoints),
+                    obstacles: maptalks.GeoJSON.toGeometry(mockObstacles),
+                })
+                    .addTo(map)
+                    .start()
+            },
+        },
+        {
+            item: 'end',
+            click: () => {
+                if (rt) rt.end()
             },
         },
     ],

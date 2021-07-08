@@ -1,4 +1,5 @@
 import * as maptalks from 'maptalks'
+import booleanIntersects from '@turf/boolean-intersects'
 
 const uid = 'routetopo@cXiaof'
 
@@ -61,7 +62,7 @@ const resultLayerStyle = {
 
 const options = {
     points: [],
-    walls: [],
+    obstacles: [],
     distance: 4,
 }
 
@@ -84,7 +85,18 @@ export class Routetopo extends maptalks.Eventable(maptalks.Class) {
     }
 
     remove() {
-        // ...
+        delete this._pointsName
+        this._pointsLayer.remove()
+        delete this._pointsLayer
+        delete this._resultName
+        this._resultLayer.remove()
+        delete this._resultLayer
+        delete this._crossName
+        this._crossLayer.remove()
+        delete this._crossLayer
+        delete this._previewName
+        this._previewLayer.remove()
+        delete this._previewLayer
     }
 
     setDistance(distance) {
@@ -108,6 +120,7 @@ export class Routetopo extends maptalks.Eventable(maptalks.Class) {
         this._map.off('click', this._handleMapClick, this)
         this._map.resetCursor()
         this.fire('end')
+        this.remove()
         return this
     }
 
@@ -219,8 +232,14 @@ export class Routetopo extends maptalks.Eventable(maptalks.Class) {
     _getLineNoIntersects(prev, current, symbol) {
         const coords = [this._coordinate, current.getCoordinates()]
         const line = new maptalks.LineString(coords, { symbol })
-        prev.push(line)
+        if (!booleanIntersects(line.toGeoJSON(), this._getObstacles()))
+            prev.push(line)
         return prev
+    }
+
+    _getObstacles() {
+        const gc = new maptalks.GeometryCollection(this.options['obstacles'])
+        return gc.toGeoJSON()
     }
 }
 
