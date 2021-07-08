@@ -1,7 +1,7 @@
 // new Map
 const map = new maptalks.Map('map', {
-    center: [121.387, 31.129],
-    zoom: 14,
+    center: [121.443, 31.2166],
+    zoom: 20,
     baseLayer: new maptalks.TileLayer('base', {
         urlTemplate:
             'http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
@@ -22,7 +22,7 @@ const map = new maptalks.Map('map', {
         resolutions: (function () {
             const resolutions = []
             const d = 2 * 6378137 * Math.PI
-            for (let i = 0; i < 22; i++) {
+            for (let i = 0; i <= 22; i++) {
                 resolutions[i] = d / (256 * Math.pow(2, i))
             }
             return resolutions
@@ -37,4 +37,21 @@ const map = new maptalks.Map('map', {
 })
 new maptalks.CompassControl({
     position: 'top-right',
+}).addTo(map)
+
+// new Toolbar
+new maptalks.control.Toolbar({
+    position: 'top-left',
+    items: [
+        {
+            item: 'start',
+            click: () => {
+                new maptalks.Routetopo({
+                    points: maptalks.GeoJSON.toGeometry(mockPoints),
+                })
+                    .addTo(map)
+                    .start()
+            },
+        },
+    ],
 }).addTo(map)
