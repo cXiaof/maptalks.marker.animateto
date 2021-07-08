@@ -26,8 +26,8 @@
     "watch": "gulp watch",
     "w": "gulp watch"
   },
-  "peerDependencies": {
-    "maptalks": ">=0.47.0"
+  "dependencies": {
+    "@turf/boolean-intersects": "^6.4.0"
   },
   "devDependencies": {
     "babel-eslint": "^10.1.0",
@@ -37,7 +37,7 @@
     "maptalks-build-helpers": "^0.4.5",
     "prettier": "^2.2.1"
   },
-  "dependencies": {
-    "@turf/boolean-intersects": "^6.4.0"
+  "peerDependencies": {
+    "maptalks": ">=0.47.0"
   }
 }
