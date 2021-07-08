@@ -1,0 +1,39 @@
+{
+  "name": "maptalks.routetopo",
+  "version": "0.1.0-alpha.1",
+  "description": "Create navigation paths topology to connect several target points, with obstacles or not.",
+  "license": "MIT",
+  "author": "cXiaof",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cXiaof/maptalks.autoadsorb.git"
+  },
+  "main": "dist/maptalks.autoadsorb.min.js",
+  "keywords": [
+    "maptalks",
+    "route",
+    "path",
+    "topo"
+  ],
+  "bugs": {
+    "url": "https://github.com/cXiaof/maptalks.routetopo/issues"
+  },
+  "homepage": "https://github.com/cXiaof/maptalks.routetopo",
+  "scripts": {
+    "prepublish": "gulp minify",
+    "b": "gulp minify",
+    "watch": "gulp watch",
+    "w": "gulp watch"
+  },
+  "peerDependencies": {
+    "maptalks": ">=0.47.0"
+  },
+  "devDependencies": {
+    "babel-eslint": "^10.1.0",
+    "babel-preset-env": "^1.7.0",
+    "gulp": "^4.0.2",
+    "maptalks": "^0.49.1",
+    "maptalks-build-helpers": "^0.4.5",
+    "prettier": "^2.2.1"
+  }
+}
