@@ -97,10 +97,12 @@ export class Routetopo extends maptalks.Eventable(maptalks.Class) {
         delete this._previewName
         this._previewLayer.remove()
         delete this._previewLayer
+        return this
     }
 
     setDistance(distance) {
         this.options['distance'] = distance
+        return this
     }
 
     start() {
