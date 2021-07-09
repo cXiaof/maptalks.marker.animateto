@@ -3592,10 +3592,12 @@ var Routetopo = function (_maptalks$Eventable) {
         delete this._previewName;
         this._previewLayer.remove();
         delete this._previewLayer;
+        return this;
     };
 
     Routetopo.prototype.setDistance = function setDistance(distance) {
         this.options['distance'] = distance;
+        return this;
     };
 
     Routetopo.prototype.start = function start() {
