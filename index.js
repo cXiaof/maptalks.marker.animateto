@@ -1,6 +1,12 @@
 import * as maptalks from 'maptalks'
 import booleanIntersects from '@turf/boolean-intersects'
 
+const options = {
+    points: [],
+    obstacles: [],
+    distance: 4,
+}
+
 const uid = 'routetopo@cXiaof'
 
 const pointsLayerStyle = [
@@ -60,15 +66,22 @@ const resultLayerStyle = {
     },
 }
 
-const options = {
-    points: [],
-    obstacles: [],
-    distance: 4,
-}
+const previewLayerStyle = [
+    {
+        filter: ['==', 'main', true],
+        symbol: { lineColor: '#f9e547', lineWidth: 2 },
+    },
+    {
+        filter: ['==', 'main', false],
+        symbol: { lineColor: '#f9e547', lineDasharray: [18, 5] },
+    },
+]
 
 export class Routetopo extends maptalks.Eventable(maptalks.Class) {
     constructor(options) {
         super(options)
+        this.living = true
+        this.working = false
     }
 
     addTo(map) {
@@ -85,6 +98,7 @@ export class Routetopo extends maptalks.Eventable(maptalks.Class) {
     }
 
     remove() {
+        if (!this.living) return this
         delete this._pointsName
         this._pointsLayer.remove()
         delete this._pointsLayer
@@ -97,6 +111,7 @@ export class Routetopo extends maptalks.Eventable(maptalks.Class) {
         delete this._previewName
         this._previewLayer.remove()
         delete this._previewLayer
+        this.living = false
         return this
     }
 
@@ -106,24 +121,41 @@ export class Routetopo extends maptalks.Eventable(maptalks.Class) {
     }
 
     start() {
+        if (!this.living) return this
         this._map.setCursor('crosshair')
         this._map.on('zoomstart', this._handleMapZoomstart, this)
         this._map.on('zoomend', this._handleMapZoomend, this)
         this._map.on('mousemove', this._handleMapMousemove, this)
         this._map.on('click', this._handleMapClick, this)
+
+        this.working = true
         this.fire('start')
         return this
     }
 
     end() {
+        if (!this.living) return this
         this._map.off('zoomstart', this._handleMapZoomstart, this)
         this._map.off('zoomend', this._handleMapZoomend, this)
         this._map.off('mousemove', this._handleMapMousemove, this)
         this._map.off('click', this._handleMapClick, this)
         this._map.resetCursor()
-        this.fire('end')
+
+        this.working = false
+        this.fire('end', {
+            result: this._getGeosCopyInLayer(this._resultLayer),
+            cross: this._getGeosCopyInLayer(this._crossLayer),
+        })
         this.remove()
         return this
+    }
+
+    isWorking() {
+        return this.working
+    }
+
+    isLiving() {
+        return this.living
     }
 
     _prepareInternalLayer() {
@@ -148,7 +180,10 @@ export class Routetopo extends maptalks.Eventable(maptalks.Class) {
         this._crossLayer.addTo(this._map).bringToFront()
 
         this._previewName = `${maptalks.INTERNAL_LAYER_PREFIX}${uid}__preview`
-        this._previewLayer = new window.maptalks.VectorLayer(this._previewName)
+        this._previewLayer = new window.maptalks.VectorLayer(
+            this._previewName,
+            { style: previewLayerStyle }
+        )
         this._previewLayer.addTo(this._map).bringToFront()
     }
 
@@ -184,7 +219,7 @@ export class Routetopo extends maptalks.Eventable(maptalks.Class) {
             includeInternals: true,
         }
         param.target.identify(identifyOpts, (geos) => {
-            this._identifyGeos = geos
+            this._identifyGeos = []
             const lines = this._getPreviewLines(geos)
             this._previewLayer.clear().addGeometry(lines)
         })
@@ -193,9 +228,7 @@ export class Routetopo extends maptalks.Eventable(maptalks.Class) {
     _handleMapClick(param) {
         new maptalks.Marker(param.coordinate).addTo(this._crossLayer)
         this._previewLayer.forEach((geo) => {
-            new maptalks.LineString(geo.getCoordinates()).addTo(
-                this._resultLayer
-            )
+            geo.copy().addTo(this._resultLayer)
         })
         this._identifyGeos.forEach((geo) => {
             geo.setProperties({ reachable: true })
@@ -218,30 +251,36 @@ export class Routetopo extends maptalks.Eventable(maptalks.Class) {
     }
 
     _getTrafficLines(geos) {
-        return geos.reduce((prev, current) => {
-            const symbol = { lineColor: '#f9e547', lineWidth: 2 }
-            return this._getLineNoIntersects(prev, current, symbol)
-        }, [])
+        return geos.reduce(
+            (prev, current) => this._getLineNoIntersects(prev, current, true),
+            []
+        )
     }
 
     _getTargetLines(geos) {
-        return geos.reduce((prev, current) => {
-            const symbol = { lineColor: '#f9e547', lineDasharray: [18, 5] }
-            return this._getLineNoIntersects(prev, current, symbol)
-        }, [])
+        return geos.reduce(
+            (prev, current) => this._getLineNoIntersects(prev, current, false),
+            []
+        )
     }
 
-    _getLineNoIntersects(prev, current, symbol) {
+    _getLineNoIntersects(prev, current, main) {
         const coords = [this._coordinate, current.getCoordinates()]
-        const line = new maptalks.LineString(coords, { symbol })
-        if (!booleanIntersects(line.toGeoJSON(), this._getObstacles()))
+        const line = new maptalks.LineString(coords, { properties: { main } })
+        if (!booleanIntersects(line.toGeoJSON(), this._getObstacles())) {
             prev.push(line)
+            if (!main) this._identifyGeos.push(current)
+        }
         return prev
     }
 
     _getObstacles() {
         const gc = new maptalks.GeometryCollection(this.options['obstacles'])
         return gc.toGeoJSON()
+    }
+
+    _getGeosCopyInLayer(layer) {
+        return layer.getGeometries().map((geo) => geo.copy())
     }
 }
 
