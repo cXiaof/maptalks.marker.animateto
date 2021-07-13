@@ -27,7 +27,7 @@
     "w": "gulp watch"
   },
   "dependencies": {
-    "@turf/boolean-intersects": "^6.4.0"
+    "@turf/boolean-intersects": "^6.5.0"
   },
   "devDependencies": {
     "babel-eslint": "^10.1.0",

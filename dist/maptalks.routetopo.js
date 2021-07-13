@@ -2145,23 +2145,23 @@ function findPoint(geojson, options) {
 
 
 var es$1 = Object.freeze({
+	coordAll: coordAll,
 	coordEach: coordEach,
 	coordReduce: coordReduce,
-	propEach: propEach,
-	propReduce: propReduce,
 	featureEach: featureEach,
 	featureReduce: featureReduce,
-	coordAll: coordAll,
-	geomEach: geomEach,
-	geomReduce: geomReduce,
+	findPoint: findPoint,
+	findSegment: findSegment,
 	flattenEach: flattenEach,
 	flattenReduce: flattenReduce,
-	segmentEach: segmentEach,
-	segmentReduce: segmentReduce,
+	geomEach: geomEach,
+	geomReduce: geomReduce,
 	lineEach: lineEach,
 	lineReduce: lineReduce,
-	findSegment: findSegment,
-	findPoint: findPoint
+	propEach: propEach,
+	propReduce: propReduce,
+	segmentEach: segmentEach,
+	segmentReduce: segmentReduce
 });
 
 /**
@@ -3504,7 +3504,8 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 var options = {
     points: [],
     obstacles: [],
-    distance: 4
+    distance: 4,
+    zoom: 20
 };
 
 var uid = 'routetopo@cXiaof';
@@ -3610,7 +3611,13 @@ var Routetopo = function (_maptalks$Eventable) {
     };
 
     Routetopo.prototype.setDistance = function setDistance(distance) {
+        if (this.working) {
+            this._map.off('mousemove', this._handleMapMousemove, this);
+        }
         this.options['distance'] = distance;
+        if (this.working) {
+            this._map.on('mousemove', this._handleMapMousemove, this);
+        }
         return this;
     };
 
@@ -3622,6 +3629,7 @@ var Routetopo = function (_maptalks$Eventable) {
         this._map.on('mousemove', this._handleMapMousemove, this);
         this._map.on('click', this._handleMapClick, this);
 
+        this._mapZoomTo20();
         this.working = true;
         this.fire('start');
         return this;
@@ -3761,7 +3769,9 @@ var Routetopo = function (_maptalks$Eventable) {
         var line = new maptalks.LineString(coords, { properties: { main: main } });
         if (!booleanIntersects(line.toGeoJSON(), this._getObstacles())) {
             prev.push(line);
-            if (!main) this._identifyGeos.push(current);
+            if (!main) {
+                this._identifyGeos.push(current);
+            }
         }
         return prev;
     };
@@ -3769,6 +3779,11 @@ var Routetopo = function (_maptalks$Eventable) {
     Routetopo.prototype._getObstacles = function _getObstacles() {
         var gc = new maptalks.GeometryCollection(this.options['obstacles']);
         return gc.toGeoJSON();
+    };
+
+    Routetopo.prototype._mapZoomTo20 = function _mapZoomTo20() {
+        var zoom = Math.min(this.options['zoom'], this._map.getMaxZoom());
+        this._map.animateTo({ zoom: zoom });
     };
 
     Routetopo.prototype._getGeosCopyInLayer = function _getGeosCopyInLayer(layer) {

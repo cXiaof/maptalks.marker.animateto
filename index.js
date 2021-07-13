@@ -5,6 +5,7 @@ const options = {
     points: [],
     obstacles: [],
     distance: 4,
+    zoom: 20,
 }
 
 const uid = 'routetopo@cXiaof'
@@ -116,7 +117,13 @@ export class Routetopo extends maptalks.Eventable(maptalks.Class) {
     }
 
     setDistance(distance) {
+        if (this.working) {
+            this._map.off('mousemove', this._handleMapMousemove, this)
+        }
         this.options['distance'] = distance
+        if (this.working) {
+            this._map.on('mousemove', this._handleMapMousemove, this)
+        }
         return this
     }
 
@@ -128,6 +135,7 @@ export class Routetopo extends maptalks.Eventable(maptalks.Class) {
         this._map.on('mousemove', this._handleMapMousemove, this)
         this._map.on('click', this._handleMapClick, this)
 
+        this._mapZoomTo20()
         this.working = true
         this.fire('start')
         return this
@@ -269,7 +277,9 @@ export class Routetopo extends maptalks.Eventable(maptalks.Class) {
         const line = new maptalks.LineString(coords, { properties: { main } })
         if (!booleanIntersects(line.toGeoJSON(), this._getObstacles())) {
             prev.push(line)
-            if (!main) this._identifyGeos.push(current)
+            if (!main) {
+                this._identifyGeos.push(current)
+            }
         }
         return prev
     }
@@ -277,6 +287,11 @@ export class Routetopo extends maptalks.Eventable(maptalks.Class) {
     _getObstacles() {
         const gc = new maptalks.GeometryCollection(this.options['obstacles'])
         return gc.toGeoJSON()
+    }
+
+    _mapZoomTo20() {
+        const zoom = Math.min(this.options['zoom'], this._map.getMaxZoom())
+        this._map.animateTo({ zoom })
     }
 
     _getGeosCopyInLayer(layer) {
