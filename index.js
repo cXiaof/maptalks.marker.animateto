@@ -12,7 +12,7 @@ const uid = 'routetopo@cXiaof'
 
 const pointsLayerStyle = [
     {
-        filter: ['==', 'reachable', true],
+        filter: ['==', '_reachable', true],
         symbol: [
             {
                 markerType: 'ellipse',
@@ -31,7 +31,7 @@ const pointsLayerStyle = [
         ],
     },
     {
-        filter: ['==', 'reachable', false],
+        filter: ['==', '_reachable', false],
         symbol: [
             {
                 markerType: 'ellipse',
@@ -61,7 +61,7 @@ const crossLayerStyle = {
     },
 }
 
-const resultLayerStyle = {
+const linksLayerStyle = {
     symbol: {
         lineColor: '#88b04b',
     },
@@ -69,12 +69,15 @@ const resultLayerStyle = {
 
 const previewLayerStyle = [
     {
-        filter: ['==', 'main', true],
-        symbol: { lineColor: '#f9e547', lineWidth: 2 },
+        filter: ['==', 'weight', 1],
+        symbol: { lineColor: '#f9e547', lineDasharray: [18, 5] },
     },
     {
-        filter: ['==', 'main', false],
-        symbol: { lineColor: '#f9e547', lineDasharray: [18, 5] },
+        filter: ['>', 'weight', 1],
+        symbol: {
+            lineColor: '#f9e547',
+            lineWidth: { property: 'weight', type: 'identity' },
+        },
     },
 ]
 
@@ -103,9 +106,9 @@ export class Routetopo extends maptalks.Eventable(maptalks.Class) {
         delete this._pointsName
         this._pointsLayer.remove()
         delete this._pointsLayer
-        delete this._resultName
-        this._resultLayer.remove()
-        delete this._resultLayer
+        delete this._linksName
+        this._linksLayer.remove()
+        delete this._linksLayer
         delete this._crossName
         this._crossLayer.remove()
         delete this._crossLayer
@@ -150,10 +153,7 @@ export class Routetopo extends maptalks.Eventable(maptalks.Class) {
         this._map.resetCursor()
 
         this.working = false
-        this.fire('end', {
-            result: this._getGeosCopyInLayer(this._resultLayer),
-            cross: this._getGeosCopyInLayer(this._crossLayer),
-        })
+        this.fire('end', this._getEndParams())
         this.remove()
         return this
     }
@@ -175,11 +175,11 @@ export class Routetopo extends maptalks.Eventable(maptalks.Class) {
         )
         this._pointsLayer.addTo(this._map).bringToFront()
 
-        this._resultName = `${maptalks.INTERNAL_LAYER_PREFIX}${uid}__result`
-        this._resultLayer = new window.maptalks.VectorLayer(this._resultName, {
-            style: resultLayerStyle,
+        this._linksName = `${maptalks.INTERNAL_LAYER_PREFIX}${uid}__links`
+        this._linksLayer = new window.maptalks.VectorLayer(this._linksName, {
+            style: linksLayerStyle,
         })
-        this._resultLayer.addTo(this._map).bringToFront()
+        this._linksLayer.addTo(this._map).bringToFront()
 
         this._crossName = `${maptalks.INTERNAL_LAYER_PREFIX}${uid}__cross`
         this._crossLayer = new window.maptalks.VectorLayer(this._crossName, {
@@ -196,15 +196,15 @@ export class Routetopo extends maptalks.Eventable(maptalks.Class) {
     }
 
     _getCopyPoints() {
-        return this.options['points'].reduce((target, geo) => {
+        return this.options['points'].reduce((target, geo, index) => {
             if (!geo instanceof maptalks.Marker) return target
-            target.push(
-                new maptalks.Marker(geo.getCoordinates(), {
-                    properties: {
-                        reachable: false,
-                    },
-                })
-            )
+            const item = geo.copy()
+            const props = Object.assign(item.getProperties(), {
+                _id: `points${index}`,
+                _reachable: false,
+            })
+            item.setProperties(props)
+            target.push(item)
             return target
         }, [])
     }
@@ -234,12 +234,15 @@ export class Routetopo extends maptalks.Eventable(maptalks.Class) {
     }
 
     _handleMapClick(param) {
-        new maptalks.Marker(param.coordinate).addTo(this._crossLayer)
+        this._addNewCross(param)
         this._previewLayer.forEach((geo) => {
-            geo.copy().addTo(this._resultLayer)
+            geo.copy().addTo(this._linksLayer)
         })
         this._identifyGeos.forEach((geo) => {
-            geo.setProperties({ reachable: true })
+            const props = Object.assign(geo.getProperties(), {
+                _reachable: true,
+            })
+            geo.setProperties(props)
         })
         this._previewLayer.clear()
     }
@@ -260,28 +263,39 @@ export class Routetopo extends maptalks.Eventable(maptalks.Class) {
 
     _getTrafficLines(geos) {
         return geos.reduce(
-            (prev, current) => this._getLineNoIntersects(prev, current, true),
+            (prev, current) => this._getLineNoIntersects(prev, current, 2),
             []
         )
     }
 
     _getTargetLines(geos) {
         return geos.reduce(
-            (prev, current) => this._getLineNoIntersects(prev, current, false),
+            (prev, current) => this._getLineNoIntersects(prev, current, 1),
             []
         )
     }
 
-    _getLineNoIntersects(prev, current, main) {
+    _getLineNoIntersects(prev, current, weight) {
         const coords = [this._coordinate, current.getCoordinates()]
-        const line = new maptalks.LineString(coords, { properties: { main } })
+        const line = new maptalks.LineString(coords, {
+            properties: {
+                weight,
+                fromId: current.getProperties()._id,
+                toId: this._getNextCrossId(),
+            },
+        })
         if (!booleanIntersects(line.toGeoJSON(), this._getObstacles())) {
             prev.push(line)
-            if (!main) {
+            if (weight === 1) {
                 this._identifyGeos.push(current)
             }
         }
         return prev
+    }
+
+    _getNextCrossId() {
+        const index = this._crossLayer.getGeometries().length
+        return `cross${index}`
     }
 
     _getObstacles() {
@@ -289,9 +303,25 @@ export class Routetopo extends maptalks.Eventable(maptalks.Class) {
         return gc.toGeoJSON()
     }
 
+    _addNewCross(param) {
+        new maptalks.Marker(param.coordinate, {
+            properties: { _id: this._getNextCrossId() },
+        }).addTo(this._crossLayer)
+    }
+
     _mapZoomTo20() {
         const zoom = Math.min(this.options['zoom'], this._map.getMaxZoom())
         this._map.animateTo({ zoom })
+    }
+
+    _getEndParams() {
+        const cross = this._getGeosCopyInLayer(this._crossLayer)
+        const pointsReachable = this._pointsLayer.filter(
+            (geo) => geo.properties._reachable
+        )
+        const nodes = [...pointsReachable, ...cross]
+        const links = this._getGeosCopyInLayer(this._linksLayer)
+        return { cross, nodes, links }
     }
 
     _getGeosCopyInLayer(layer) {

@@ -3,9 +3,6 @@
  * LICENSE : MIT
  * (c) 2016-2021 maptalks.org
  */
-/*!
- * requires maptalks@>=0.47.0 
- */
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('maptalks')) :
 	typeof define === 'function' && define.amd ? define(['exports', 'maptalks'], factory) :
@@ -3511,7 +3508,7 @@ var options = {
 var uid = 'routetopo@cXiaof';
 
 var pointsLayerStyle = [{
-    filter: ['==', 'reachable', true],
+    filter: ['==', '_reachable', true],
     symbol: [{
         markerType: 'ellipse',
         markerFill: '#898989',
@@ -3526,7 +3523,7 @@ var pointsLayerStyle = [{
         markerLineWidth: 0
     }]
 }, {
-    filter: ['==', 'reachable', false],
+    filter: ['==', '_reachable', false],
     symbol: [{
         markerType: 'ellipse',
         markerFill: '#898989',
@@ -3552,18 +3549,21 @@ var crossLayerStyle = {
     }
 };
 
-var resultLayerStyle = {
+var linksLayerStyle = {
     symbol: {
         lineColor: '#88b04b'
     }
 };
 
 var previewLayerStyle = [{
-    filter: ['==', 'main', true],
-    symbol: { lineColor: '#f9e547', lineWidth: 2 }
-}, {
-    filter: ['==', 'main', false],
+    filter: ['==', 'weight', 1],
     symbol: { lineColor: '#f9e547', lineDasharray: [18, 5] }
+}, {
+    filter: ['>', 'weight', 1],
+    symbol: {
+        lineColor: '#f9e547',
+        lineWidth: { property: 'weight', type: 'identity' }
+    }
 }];
 
 var Routetopo = function (_maptalks$Eventable) {
@@ -3597,9 +3597,9 @@ var Routetopo = function (_maptalks$Eventable) {
         delete this._pointsName;
         this._pointsLayer.remove();
         delete this._pointsLayer;
-        delete this._resultName;
-        this._resultLayer.remove();
-        delete this._resultLayer;
+        delete this._linksName;
+        this._linksLayer.remove();
+        delete this._linksLayer;
         delete this._crossName;
         this._crossLayer.remove();
         delete this._crossLayer;
@@ -3644,10 +3644,7 @@ var Routetopo = function (_maptalks$Eventable) {
         this._map.resetCursor();
 
         this.working = false;
-        this.fire('end', {
-            result: this._getGeosCopyInLayer(this._resultLayer),
-            cross: this._getGeosCopyInLayer(this._crossLayer)
-        });
+        this.fire('end', this._getEndParams());
         this.remove();
         return this;
     };
@@ -3665,11 +3662,11 @@ var Routetopo = function (_maptalks$Eventable) {
         this._pointsLayer = new window.maptalks.VectorLayer(this._pointsName, this._getCopyPoints(), { style: pointsLayerStyle });
         this._pointsLayer.addTo(this._map).bringToFront();
 
-        this._resultName = '' + maptalks.INTERNAL_LAYER_PREFIX + uid + '__result';
-        this._resultLayer = new window.maptalks.VectorLayer(this._resultName, {
-            style: resultLayerStyle
+        this._linksName = '' + maptalks.INTERNAL_LAYER_PREFIX + uid + '__links';
+        this._linksLayer = new window.maptalks.VectorLayer(this._linksName, {
+            style: linksLayerStyle
         });
-        this._resultLayer.addTo(this._map).bringToFront();
+        this._linksLayer.addTo(this._map).bringToFront();
 
         this._crossName = '' + maptalks.INTERNAL_LAYER_PREFIX + uid + '__cross';
         this._crossLayer = new window.maptalks.VectorLayer(this._crossName, {
@@ -3683,13 +3680,15 @@ var Routetopo = function (_maptalks$Eventable) {
     };
 
     Routetopo.prototype._getCopyPoints = function _getCopyPoints() {
-        return this.options['points'].reduce(function (target, geo) {
+        return this.options['points'].reduce(function (target, geo, index) {
             if (!geo instanceof maptalks.Marker) return target;
-            target.push(new maptalks.Marker(geo.getCoordinates(), {
-                properties: {
-                    reachable: false
-                }
-            }));
+            var item = geo.copy();
+            var props = Object.assign(item.getProperties(), {
+                _id: 'points' + index,
+                _reachable: false
+            });
+            item.setProperties(props);
+            target.push(item);
             return target;
         }, []);
     };
@@ -3724,12 +3723,15 @@ var Routetopo = function (_maptalks$Eventable) {
     Routetopo.prototype._handleMapClick = function _handleMapClick(param) {
         var _this3 = this;
 
-        new maptalks.Marker(param.coordinate).addTo(this._crossLayer);
+        this._addNewCross(param);
         this._previewLayer.forEach(function (geo) {
-            geo.copy().addTo(_this3._resultLayer);
+            geo.copy().addTo(_this3._linksLayer);
         });
         this._identifyGeos.forEach(function (geo) {
-            geo.setProperties({ reachable: true });
+            var props = Object.assign(geo.getProperties(), {
+                _reachable: true
+            });
+            geo.setProperties(props);
         });
         this._previewLayer.clear();
     };
@@ -3752,7 +3754,7 @@ var Routetopo = function (_maptalks$Eventable) {
         var _this4 = this;
 
         return geos.reduce(function (prev, current) {
-            return _this4._getLineNoIntersects(prev, current, true);
+            return _this4._getLineNoIntersects(prev, current, 2);
         }, []);
     };
 
@@ -3760,20 +3762,31 @@ var Routetopo = function (_maptalks$Eventable) {
         var _this5 = this;
 
         return geos.reduce(function (prev, current) {
-            return _this5._getLineNoIntersects(prev, current, false);
+            return _this5._getLineNoIntersects(prev, current, 1);
         }, []);
     };
 
-    Routetopo.prototype._getLineNoIntersects = function _getLineNoIntersects(prev, current, main) {
+    Routetopo.prototype._getLineNoIntersects = function _getLineNoIntersects(prev, current, weight) {
         var coords = [this._coordinate, current.getCoordinates()];
-        var line = new maptalks.LineString(coords, { properties: { main: main } });
+        var line = new maptalks.LineString(coords, {
+            properties: {
+                weight: weight,
+                fromId: current.getProperties()._id,
+                toId: this._getNextCrossId()
+            }
+        });
         if (!booleanIntersects(line.toGeoJSON(), this._getObstacles())) {
             prev.push(line);
-            if (!main) {
+            if (weight === 1) {
                 this._identifyGeos.push(current);
             }
         }
         return prev;
+    };
+
+    Routetopo.prototype._getNextCrossId = function _getNextCrossId() {
+        var index = this._crossLayer.getGeometries().length;
+        return 'cross' + index;
     };
 
     Routetopo.prototype._getObstacles = function _getObstacles() {
@@ -3781,9 +3794,25 @@ var Routetopo = function (_maptalks$Eventable) {
         return gc.toGeoJSON();
     };
 
+    Routetopo.prototype._addNewCross = function _addNewCross(param) {
+        new maptalks.Marker(param.coordinate, {
+            properties: { _id: this._getNextCrossId() }
+        }).addTo(this._crossLayer);
+    };
+
     Routetopo.prototype._mapZoomTo20 = function _mapZoomTo20() {
         var zoom = Math.min(this.options['zoom'], this._map.getMaxZoom());
         this._map.animateTo({ zoom: zoom });
+    };
+
+    Routetopo.prototype._getEndParams = function _getEndParams() {
+        var cross = this._getGeosCopyInLayer(this._crossLayer);
+        var pointsReachable = this._pointsLayer.filter(function (geo) {
+            return geo.properties._reachable;
+        });
+        var nodes = [].concat(pointsReachable, cross);
+        var links = this._getGeosCopyInLayer(this._linksLayer);
+        return { cross: cross, nodes: nodes, links: links };
     };
 
     Routetopo.prototype._getGeosCopyInLayer = function _getGeosCopyInLayer(layer) {
@@ -3801,6 +3830,6 @@ exports.Routetopo = Routetopo;
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
-typeof console !== 'undefined' && console.log('maptalks.routetopo v0.1.0-alpha.1, requires maptalks@>=0.47.0.');
+typeof console !== 'undefined' && console.log('maptalks.routetopo v0.1.0-alpha.1');
 
 })));
