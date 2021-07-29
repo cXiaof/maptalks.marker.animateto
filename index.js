@@ -278,8 +278,8 @@ export class Routetopo extends maptalks.Eventable(maptalks.Class) {
 
     _getLineNoIntersects(prev, current, weight) {
         const coords = [this._coordinate, current.getCoordinates()]
-        const fromId =
-            current.getProperties()[this.options['linkField'] || '_id']
+        const props = current.getProperties()
+        const fromId = props[this.options['linkField']] || props._id
         const toId = this._getNextCrossId()
         const line = new maptalks.LineString(coords, {
             properties: { weight, fromId, toId },

@@ -3765,7 +3765,8 @@ var Routetopo = function (_maptalks$Eventable) {
 
     Routetopo.prototype._getLineNoIntersects = function _getLineNoIntersects(prev, current, weight) {
         var coords = [this._coordinate, current.getCoordinates()];
-        var fromId = current.getProperties()[this.options['linkField'] || '_id'];
+        var props = current.getProperties();
+        var fromId = props[this.options['linkField']] || props._id;
         var toId = this._getNextCrossId();
         var line = new LineString(coords, {
             properties: { weight: weight, fromId: fromId, toId: toId }
