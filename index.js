@@ -6,6 +6,7 @@ const options = {
     obstacles: [],
     distance: 4,
     zoom: 20,
+    idField: '',
 }
 
 const uid = 'routetopo@cXiaof'
@@ -277,12 +278,10 @@ export class Routetopo extends maptalks.Eventable(maptalks.Class) {
 
     _getLineNoIntersects(prev, current, weight) {
         const coords = [this._coordinate, current.getCoordinates()]
+        const fromId = current.getProperties()[this.options['idField'] || '_id']
+        const toId = this._getNextCrossId()
         const line = new maptalks.LineString(coords, {
-            properties: {
-                weight,
-                fromId: current.getProperties()._id,
-                toId: this._getNextCrossId(),
-            },
+            properties: { weight, fromId, toId },
         })
         if (!booleanIntersects(line.toGeoJSON(), this._getObstacles())) {
             prev.push(line)

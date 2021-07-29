@@ -3502,7 +3502,8 @@ var options = {
     points: [],
     obstacles: [],
     distance: 4,
-    zoom: 20
+    zoom: 20,
+    idField: ''
 };
 
 var uid = 'routetopo@cXiaof';
@@ -3768,12 +3769,10 @@ var Routetopo = function (_maptalks$Eventable) {
 
     Routetopo.prototype._getLineNoIntersects = function _getLineNoIntersects(prev, current, weight) {
         var coords = [this._coordinate, current.getCoordinates()];
+        var fromId = current.getProperties()[this.options['idField'] || '_id'];
+        var toId = this._getNextCrossId();
         var line = new maptalks.LineString(coords, {
-            properties: {
-                weight: weight,
-                fromId: current.getProperties()._id,
-                toId: this._getNextCrossId()
-            }
+            properties: { weight: weight, fromId: fromId, toId: toId }
         });
         if (!booleanIntersects(line.toGeoJSON(), this._getObstacles())) {
             prev.push(line);
