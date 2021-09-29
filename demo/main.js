@@ -50,23 +50,43 @@ const path = [
 
 const marker = new maptalks.Marker(map.getCenter())
 const layer = new maptalks.VectorLayer('v', [marker]).addTo(map)
-const options = {
-    speed: 1200,
-    showPath: true,
-}
+
 const toolbar = new maptalks.control.Toolbar({
     position: 'top-left',
     items: [
         {
-            item: 'animate to point',
+            item: 'to point',
             click: () => {
-                marker.animateTo(path[path.length - 1], options)
+                marker.animateTo(path[path.length - 1], {
+                    speed: 1200,
+                    easing: 'inAndOut',
+                })
             },
         },
         {
-            item: 'animate follow path',
+            item: 'follow path',
             click: () => {
-                marker.animateTo(path, options)
+                marker.animateTo(path, { speed: 1200, easing: 'inAndOut' })
+            },
+        },
+        {
+            item: 'to point(showPath)',
+            click: () => {
+                marker.animateTo(path[path.length - 1], {
+                    speed: 1200,
+                    easing: 'inAndOut',
+                    showPath: true,
+                })
+            },
+        },
+        {
+            item: 'follow path(showPath)',
+            click: () => {
+                marker.animateTo(path, {
+                    speed: 1200,
+                    easing: 'inAndOut',
+                    showPath: true,
+                })
             },
         },
     ],
