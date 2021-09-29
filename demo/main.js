@@ -38,3 +38,36 @@ const map = new maptalks.Map('map', {
 new maptalks.CompassControl({
     position: 'top-right',
 }).addTo(map)
+
+const path = [
+    [121.4182378463745, 31.222545506124476],
+    [121.43308655548094, 31.213957432810588],
+    [121.44338623809813, 31.222545506124476],
+    [121.45900742340086, 31.21190205171368],
+    [121.46887795257567, 31.219609500451583],
+    [121.45626084136961, 31.222398708006637],
+]
+
+const marker = new maptalks.Marker(map.getCenter())
+const layer = new maptalks.VectorLayer('v', [marker]).addTo(map)
+const options = {
+    speed: 1200,
+    showPath: true,
+}
+const toolbar = new maptalks.control.Toolbar({
+    position: 'top-left',
+    items: [
+        {
+            item: 'animate to point',
+            click: () => {
+                marker.animateTo(path[path.length - 1], options)
+            },
+        },
+        {
+            item: 'animate follow path',
+            click: () => {
+                marker.animateTo(path, options)
+            },
+        },
+    ],
+}).addTo(map)
