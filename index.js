@@ -4,6 +4,7 @@ const layerName = `${maptalks.INTERNAL_LAYER_PREFIX}_marker_animateto`
 const optsDefault = {
     speed: 1.2,
     showPath: false,
+    easing: 'out',
     pathSymbol: {
         lineColor: '#97999b',
         lineOpacity: 0.3,
@@ -83,12 +84,20 @@ const getLineSymbol = (options) => {
 }
 
 const animateShowLine = (line, options) => {
-    const length = line.getLength()
-    const duration = options['duration'] || 1000 * (length / options['speed'])
-    const easing = 'inAndOut'
+    const duration = getAnimateShowDuration(line, options)
+    const easing = options['easing']
     line.animateShow({ duration, easing }, (frame) => {
         if (frame.state.playState === 'finished') {
             line.remove()
         }
     })
+}
+
+const getAnimateShowDuration = (line, options) => {
+    const length = line.getLength()
+    let duration = options['duration']
+    if (!duration) duration = 1000 * (length / options['speed'])
+    if (options['maxDuration'])
+        duration = Math.min(duration, options['maxDuration'])
+    return duration
 }
