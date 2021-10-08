@@ -17,6 +17,7 @@ As a plugin, `maptalks.marker.animateto` must be loaded after `maptalks.js` in b
 
 ```html
 <!-- ... -->
+<script src="https://cdn.jsdelivr.net/npm/maptalks/dist/maptalks.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/maptalks.marker.animateto/dist/maptalks.marker.animateto.min.js"></script>
 <!-- ... -->
 ```
@@ -28,7 +29,7 @@ marker.animateTo([121.443, 31.2166])
 ## API Reference
 
 ```javascript
-new maptalks.Autoadsorb(path, options)
+marker.animateTo(path, options)
 ```
 
 -   path **number[] | number[][] | Coords[] | Coords[][]**
