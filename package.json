@@ -1,6 +1,6 @@
 {
   "name": "maptalks.marker.animateto",
-  "version": "0.1.0-alpha.1",
+  "version": "0.1.0-beta.1",
   "description": "MAPTALKS Marker animateTo",
   "license": "MIT",
   "author": "cXiaof",
@@ -14,9 +14,7 @@
     "marker",
     "animateto",
     "animate",
-    "path",
-    "play",
-    "player"
+    "path"
   ],
   "bugs": {
     "url": "https://github.com/cXiaof/maptalks.marker.animateto/issues"
@@ -29,7 +27,7 @@
     "w": "gulp watch"
   },
   "peerDependencies": {
-    "maptalks": ">=0.47.0"
+    "maptalks": ">=0.47.0 <1.0.0"
   },
   "devDependencies": {
     "babel-eslint": "^10.1.0",

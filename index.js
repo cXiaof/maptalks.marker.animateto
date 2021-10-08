@@ -3,7 +3,6 @@ import * as maptalks from 'maptalks'
 const layerName = `${maptalks.INTERNAL_LAYER_PREFIX}_marker_animateto`
 const optsDefault = {
     speed: 1.2,
-    showPath: false,
     easing: 'out',
     pathSymbol: {
         lineColor: '#97999b',
@@ -18,6 +17,7 @@ maptalks.Marker.include({
         options = Object.assign({}, optsDefault, options)
         const line = getPathLine(target, options, this)
         if (line) {
+            marker.fire('animatetostart')
             line.on('shapechange', () => {
                 this.setCoordinates(line.getLastCoordinate())
             })
@@ -29,6 +29,7 @@ maptalks.Marker.include({
 
 const clearLastAnimate = (marker) => {
     if (marker._animateToLine) {
+        marker.fire('animatetocancel')
         marker._animateToLine.remove()
     }
 }
@@ -41,9 +42,11 @@ const getPathLine = (target, options, marker) => {
     const coords = getLineCoords(target, thisCoords)
     if (coords) {
         const layer = getLineLayer(map)
-        const symbol = getLineSymbol(options)
-        const line = new maptalks.LineString(coords, { symbol })
-        line.hide().addTo(layer)
+        const lineOpts = { visible: false, symbol: getLineSymbol(options) }
+        const line = new maptalks.LineString(coords, lineOpts).addTo(layer)
+        line.on('remove', () => {
+            marker.fire('animatetoend')
+        })
         animateShowLine(line, options)
         return line
     }

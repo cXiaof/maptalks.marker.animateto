@@ -39,6 +39,11 @@ new maptalks.CompassControl({
     position: 'top-right',
 }).addTo(map)
 
+// prepare Marker
+const marker = new maptalks.Marker(map.getCenter())
+const layer = new maptalks.VectorLayer('v', [marker]).addTo(map)
+
+// mock path
 const path = [
     [121.4182378463745, 31.222545506124476],
     [121.43308655548094, 31.213957432810588],
@@ -48,9 +53,7 @@ const path = [
     [121.45626084136961, 31.222398708006637],
 ]
 
-const marker = new maptalks.Marker(map.getCenter())
-const layer = new maptalks.VectorLayer('v', [marker]).addTo(map)
-
+// new Toolbar
 const toolbar = new maptalks.control.Toolbar({
     position: 'top-left',
     items: [

@@ -1,17 +1,16 @@
 /*!
- * maptalks.marker.animateto v0.1.0-alpha.1
+ * maptalks.marker.animateto v0.1.0-beta.1
  * LICENSE : MIT
  * (c) 2016-2021 maptalks.org
  */
 /*!
- * requires maptalks@>=0.47.0 
+ * requires maptalks@>=0.47.0 <1.0.0 
  */
 import { Coordinate, INTERNAL_LAYER_PREFIX, LineString, Marker, VectorLayer } from 'maptalks';
 
 var layerName = INTERNAL_LAYER_PREFIX + '_marker_animateto';
 var optsDefault = {
     speed: 1.2,
-    showPath: false,
     easing: 'out',
     pathSymbol: {
         lineColor: '#97999b',
@@ -28,6 +27,7 @@ Marker.include({
         options = Object.assign({}, optsDefault, options);
         var line = getPathLine(target, options, this);
         if (line) {
+            marker.fire('animatetostart');
             line.on('shapechange', function () {
                 _this.setCoordinates(line.getLastCoordinate());
             });
@@ -39,6 +39,7 @@ Marker.include({
 
 var clearLastAnimate = function clearLastAnimate(marker) {
     if (marker._animateToLine) {
+        marker.fire('animatetocancel');
         marker._animateToLine.remove();
     }
 };
@@ -51,9 +52,11 @@ var getPathLine = function getPathLine(target, options, marker) {
     var coords = getLineCoords(target, thisCoords);
     if (coords) {
         var layer = getLineLayer(map);
-        var symbol = getLineSymbol(options);
-        var line = new LineString(coords, { symbol: symbol });
-        line.hide().addTo(layer);
+        var lineOpts = { visible: false, symbol: getLineSymbol(options) };
+        var line = new LineString(coords, lineOpts).addTo(layer);
+        line.on('remove', function () {
+            marker.fire('animatetoend');
+        });
         animateShowLine(line, options);
         return line;
     }
@@ -110,4 +113,4 @@ var getAnimateShowDuration = function getAnimateShowDuration(line, options) {
     return duration;
 };
 
-typeof console !== 'undefined' && console.log('maptalks.marker.animateto v0.1.0-alpha.1, requires maptalks@>=0.47.0.');
+typeof console !== 'undefined' && console.log('maptalks.marker.animateto v0.1.0-beta.1, requires maptalks@>=0.47.0 <1.0.0.');
