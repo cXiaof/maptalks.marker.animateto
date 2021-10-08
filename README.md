@@ -1,17 +1,81 @@
-# maptalks.routetopo
-
-Create navigation paths topology to connect several target points, with obstacles or not.
+# maptalks.marker.animateto
 
 ## Examples
 
-### [DEMO](https://cxiaof.github.io/maptalks.routetopo/demo/index.html)
+### [DEMO](https://cxiaof.github.io/maptalks.marker.animateto/demo/index.html)
 
 ## Install
 
--   Install with npm: `npm install maptalks.routetopo`.
--   Install with yarn: `yarn add maptalks.routetopo`.
--   Download from [dist directory](https://github.com/cXiaof/maptalks.routetopo/tree/master/dist).
--   Use unpkg CDN: `https://cdn.jsdelivr.net/npm/maptalks.routetopo/dist/maptalks.routetopo.min.js`
+-   Install with npm: `npm install maptalks.marker.animateto`.
+-   Install with yarn: `yarn add maptalks.marker.animateto`.
+-   Download from [dist directory](https://github.com/cXiaof/maptalks.marker.animateto/tree/main/dist).
+-   Use unpkg CDN: `https://cdn.jsdelivr.net/npm/maptalks.marker.animateto/dist/maptalks.marker.animateto.min.js`
+
+## Usage
+
+As a plugin, `maptalks.marker.animateto` must be loaded after `maptalks.js` in browsers.
+
+```html
+<!-- ... -->
+<script src="https://cdn.jsdelivr.net/npm/maptalks.marker.animateto/dist/maptalks.marker.animateto.min.js"></script>
+<!-- ... -->
+```
+
+```javascript
+marker.animateTo([121.443, 31.2166])
+```
+
+## API Reference
+
+```javascript
+new maptalks.Autoadsorb(path, options)
+```
+
+-   path **number[] | number[][] | Coords[] | Coords[][]**
+
+-   options **Object** options
+    -   pathSymbol **Object** reference to the symbol of LineString.
+    -   showPath **Boolean** whether to show path LineString, false by default.
+    -   easing **String** animation easing, 'out' by default.
+    -   duration **Number** animation duration.
+    -   speed **Number** animation speed, 1.2 m/s by default, work if no duration.
+    -   maxDuration **Number** animation max duration, work for both duration and speed.
+
+## Contributing
+
+We welcome any kind of contributions including issue reportings, pull requests, documentation corrections, feature requests and any other helps.
+
+## Develop
+
+The only source file is `index.js`.
+
+It is written in ES6, transpiled by [babel](https://babeljs.io/) and tested with [mocha](https://mochajs.org) and [expect.js](https://github.com/Automattic/expect.js).
+
+### Scripts
+
+-   Install dependencies
+
+```shell
+$ npm install
+```
+
+-   Watch source changes and generate runnable bundle repeatedly
+
+```shell
+$ gulp watch
+```
+
+-   Package and generate minified bundles to dist directory
+
+```shell
+$ gulp minify
+```
+
+-   Lint
+
+```shell
+$ npm run lint
+```
 
 ## More Things
 
@@ -21,5 +85,4 @@ Create navigation paths topology to connect several target points, with obstacle
 -   [maptalks.polygonbool](https://github.com/cXiaof/maptalks.polygonbool/issues)
 -   [maptalks.geo2img](https://github.com/cXiaof/maptalks.geo2img/issues)
 -   [maptalks.autogradual](https://github.com/cXiaof/maptalks.autogradual/issues)
--   [maptalks.routetopo](https://github.com/cXiaof/maptalks.routetopo/issues)
 -   [maptalks.control.compass](https://github.com/cXiaof/maptalks.control.compass/issues)
