@@ -32,7 +32,7 @@ marker.animateTo([121.443, 31.2166])
 marker.animateTo(path, options)
 ```
 
--   path **number[] | number[][] | Coords[] | Coords[][]**
+-   path **number[] | number[][] | Coordinate[] | Coordinate[][]**
 
 -   options **Object** options
     -   pathSymbol **Object** reference to the symbol of LineString.
