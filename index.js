@@ -17,7 +17,7 @@ maptalks.Marker.include({
         options = Object.assign({}, optsDefault, options)
         const line = getPathLine(target, options, this)
         if (line) {
-            marker.fire('animatetostart')
+            this.fire('animatetostart')
             line.on('shapechange', () => {
                 this.setCoordinates(line.getLastCoordinate())
             })

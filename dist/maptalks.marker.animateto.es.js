@@ -1,5 +1,5 @@
 /*!
- * maptalks.marker.animateto v0.1.0-beta.1
+ * maptalks.marker.animateto v0.1.0-beta.2
  * LICENSE : MIT
  * (c) 2016-2021 maptalks.org
  */
@@ -27,7 +27,7 @@ Marker.include({
         options = Object.assign({}, optsDefault, options);
         var line = getPathLine(target, options, this);
         if (line) {
-            marker.fire('animatetostart');
+            this.fire('animatetostart');
             line.on('shapechange', function () {
                 _this.setCoordinates(line.getLastCoordinate());
             });
@@ -113,4 +113,4 @@ var getAnimateShowDuration = function getAnimateShowDuration(line, options) {
     return duration;
 };
 
-typeof console !== 'undefined' && console.log('maptalks.marker.animateto v0.1.0-beta.1, requires maptalks@>=0.47.0 <1.0.0.');
+typeof console !== 'undefined' && console.log('maptalks.marker.animateto v0.1.0-beta.2, requires maptalks@>=0.47.0 <1.0.0.');
