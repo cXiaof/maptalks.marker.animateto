@@ -39,7 +39,7 @@ marker.animateTo(path, options)
     -   showPath **Boolean** whether to show path LineString, false by default.
     -   easing **String** animation easing, 'out' by default.
     -   duration **Number** animation duration.
-    -   speed **Number** animation speed, 1.2 m/s by default, work if no duration.
+    -   speed **Number** animation speed, unit is m/s, 1.2 by default, work if no duration.
     -   maxDuration **Number** animation max duration, work for both duration and speed.
 
 ## Contributing
